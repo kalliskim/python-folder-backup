@@ -1,8 +1,9 @@
 import os
+import sys
 import pandas as pd
 import yaml
 import shutil
-import time
+from tqdm import tqdm
 
 
 def create_folder_dataframe(folder_path):
@@ -53,7 +54,7 @@ def copy_files_to_backup(df, source_folder, target_folder):
         source_folder (str): The source folder path.
         target_folder (str): The target folder path.
     """
-    for index, row in df.iterrows():
+    for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Copying files"):
         source_path = os.path.join(source_folder, row['path'].lstrip("\\"))
         target_path = os.path.join(target_folder, row['path'].lstrip("\\"))
         
@@ -65,7 +66,7 @@ def main():
     """
     Main function to execute the backup process.
     """
-    config = load_config("config/config.yml")
+    config = load_config("config.yml")
 
     wrkdir_files = create_folder_dataframe(config["backup_config"]["source_filepath"])
     bckpdir_files = create_folder_dataframe(config["backup_config"]["target_filepath"])
@@ -103,7 +104,7 @@ def main():
     if del_df.shape[0] > 0:
         print("Files to delete:")
         print(del_df)
-        for index, row in del_df.iterrows():
+        for index, row in tqdm(del_df.iterrows(), total=del_df.shape[0], desc="Deleting files"):
             target_path = os.path.join(config["backup_config"]["target_filepath"], row['path'].lstrip("\\"))
             os.remove(target_path)
         print("Files deleted")
@@ -111,10 +112,27 @@ def main():
         print("No files to delete")
 
     print("\n ---------------- \n")
-    
-    print("End of the program")
-    time.sleep(5)
 
+    print("End of the program")
 
 if __name__ == "__main__":
-    main()
+    try:
+        # Verzeichnis der EXE-Datei ermitteln
+        exe_dir = os.path.dirname(sys.executable)
+        os.chdir(exe_dir)
+        print(f"Verzeichnis der EXE-Datei: {exe_dir}")
+
+        main()
+    except Exception as e:
+        print(f"Ein Fehler ist aufgetreten: {e}")
+        print(f"Aktuelles Verzeichnis: {os.getcwd()}")
+
+        print("Versuche lokale Dateien zu verwenden...")
+        
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        main()
+
+
+    finally:
+        input("Drücken Sie die Eingabetaste, um das Fenster zu schließen...")
+    
