@@ -1,0 +1,3 @@
+backup_config:
+  source_filepath: "C:\\...\\wrkdir"
+  target_filepath: "C:\\...\\bckpdir"
